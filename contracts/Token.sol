@@ -26,6 +26,12 @@ contract Token is MintableToken {
         uint256 amount
     );
 
+    event LogMint
+    (
+        address forWhom,
+        uint256 amount
+    );
+
     // Enforce logicContract only calls
     modifier onlyLogicContract() {
         require(msg.sender == logicContract, "Only logicContract can call this");
@@ -55,6 +61,8 @@ contract Token is MintableToken {
 
         totalSupply_ = totalSupply_.add(_amount);
         balances[_who] = balances[_who].add(_amount);
+        emit LogMint(_who, _amount);
+        
         return true;
     }
 

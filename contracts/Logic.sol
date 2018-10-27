@@ -57,6 +57,11 @@ contract Logic is Ownable {
         uint256 amount
     );
 
+    event LogCharityAllocationSent(
+        uint256 amount,
+        address indexed account
+    );
+
     modifier onlyOwner() {
         require(msg.sender == owner);
         _;
@@ -78,6 +83,7 @@ contract Logic is Ownable {
     * @dev The fallback function - should call 'donate' function in Logic contract
     */
     function () public payable {
+        // Not working yet
         require(donate(), "Donation did not complete successfully");
     }
 
@@ -109,6 +115,7 @@ contract Logic is Ownable {
     function sendToCharity(uint256 _amount) internal {
         // this should auto convert to DAI
         charityAddress.transfer(_amount);
+        emit LogCharityAllocationSent(_amount, msg.sender);
     }
 
     /**

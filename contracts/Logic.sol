@@ -40,8 +40,8 @@ contract Logic is Ownable {
     event LogMinEthChanged
     (
         address byWhom,
-        address oldAmount,
-        address newAmount
+        uint256 oldAmount,
+        uint256 newAmount
     );
 
     event LogCharityAddressChanged
@@ -54,7 +54,7 @@ contract Logic is Ownable {
     event LogDonationReceived
     (
         address byWhom,
-        address amount
+        uint256 amount
     );
 
     modifier onlyOwner() {
@@ -78,7 +78,7 @@ contract Logic is Ownable {
     * @dev The fallback function - should call 'donate' function in Logic contract
     */
     function () public payable {
-        donate();
+        require(donate(), "Donation did not complete successfully");
     }
 
     /**
@@ -89,21 +89,26 @@ contract Logic is Ownable {
         require(msg.value > 0, "Must include some ETH to donate");
 
         // Make ETH distributions
-        uint256 charityAllocation = (msg.value).mul(0.9);
-        uint256 bondingAllocation = (msg.value).sub(charityAllocation);
-        sendToCharity(charityAllocation);
+        uint256 multiplier = 100;
+        uint256 charityAllocation = (msg.value).mul(90); // 90% with multiplier
+        uint256 bondingAllocation = (msg.value.mul(multiplier)).sub(charityAllocation).div(multiplier);
+        sendToCharity(charityAllocation.div(multiplier));
+
+        // sendToCharity(0.9 ether);
+        // uint256 bondingAllocation = 0.1 ether;
         bondingContract.transfer(bondingAllocation);
 
         // Mint the tokens - 10:1 ratio (e.g. for every 1 ETH sent, you get 10 tokens)
-        Token(tokenContract).mintToken(msg.sender, (msg.value).mul(10));
-
+        bool minting = Token(tokenContract).mintToken(msg.sender, (msg.value).mul(10));
         emit LogDonationReceived(msg.sender, msg.value);
+
+        return minting;
     }
     
     // TODO: - DAI integration: buy DAI with ETH, store in charityAddress
     function sendToCharity(uint256 _amount) internal {
         // this should auto convert to DAI
-        charityAddress.transfer(charityAllocation);
+        charityAddress.transfer(_amount);
     }
 
     /**
@@ -189,7 +194,7 @@ contract Logic is Ownable {
     function setMinEth(uint256 _minEth) public onlyOwner {
         uint256 oldAmount = minEth;
         minEth = _minEth;
-        emit LogBondingContractChanged(msg.sender, oldAmount, _minEth);
+        emit LogMinEthChanged(msg.sender, oldAmount, _minEth);
     }
 
     /**
@@ -200,7 +205,6 @@ contract Logic is Ownable {
         charityAddress = _charityAddress;
         emit LogCharityAddressChanged(msg.sender, oldAddress, _charityAddress);
     }
-
 
     //allow freezing of everything
 

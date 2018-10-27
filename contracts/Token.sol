@@ -2,6 +2,7 @@ pragma solidity ^0.4.24;
 
 import "openzeppelin-solidity/contracts/token/ERC20/MintableToken.sol";
 import "./BondingCurve.sol";
+import "./Logic.sol";
 
 contract Token is MintableToken {
 
@@ -27,7 +28,7 @@ contract Token is MintableToken {
 
     // Enforce logicContract only calls
     modifier onlyLogicContract() {
-        require(msg.sender == logicContract);
+        require(msg.sender == logicContract, "Only logicContract can call this");
         _;
     }
 
@@ -48,11 +49,13 @@ contract Token is MintableToken {
     /**
      * @dev The mint function
      */
-    function mintToken(address _who, uint256 _amount) public onlyLogicContract {
+    function mintToken(address _who, uint256 _amount) public onlyLogicContract returns (bool) {
         require(_who != address(0), "Invalid address");
         require(_amount > 0, "Invalid amount to mint");
 
-        mint(_who, _amount);
+        totalSupply_ = totalSupply_.add(_amount);
+        balances[_who] = balances[_who].add(_amount);
+        return true;
     }
 
     /**

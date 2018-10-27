@@ -14,15 +14,20 @@ contract BondingCurve is Ownable {
     event LogLogicContractChanged
     (
         address byWhom,
-        address oldContract,
+        address indexed oldContract,
         address newContract
     );
 
     event LogTokenContractChanged
     (
         address byWhom,
-        address oldContract,
+        address indexed oldContract,
         address newContract
+    );
+
+    event LogEthSent(
+        uint256 amount,
+        address indexed account
     );
 
     
@@ -43,11 +48,23 @@ contract BondingCurve is Ownable {
         setTokenContract(_tokenContract);
     }
 
-    // send eth to seller (onlyLogicContract can call)
+    /**
+    * @dev Send ETH _amount to _account
+    */
+    function sendEth(uint256 _amount, address _account) public onlyLogicContract {
+        _account.transfer(_amount);
+        emit LogEthSent(_amount, _account);
+    }
 
     // mint tokens to donator (onlyLogicContract)
 
     // payable function mints tokens to sender (donation), sends 90% to logic contract for chairty
+    /**
+     * @dev The fallback function - should call 'donate' function in Logic contract
+     */
+    function () public payable {
+        
+    }
 
     /**
     * @dev Set the 'logicContract' to a different contract address

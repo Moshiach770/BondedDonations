@@ -7,13 +7,12 @@ var Token = artifacts.require("Token");
 var BondingCurve = artifacts.require("BondingCurve");
 
 
-module.exports = async function (deployer, accounts) {
+module.exports = async function (deployer, network, accounts) {
 
   // temp
   // deployer.deploy(SimpleStorage);
   // deployer.deploy(TutorialToken);
   // deployer.deploy(ComplexStorage);
-
   console.log('  === Deploying BondedDonation contracts...')
 
   // Deploy LogicContract
@@ -35,4 +34,19 @@ module.exports = async function (deployer, accounts) {
 
   console.log('tokenAddress set: ' + tokenAddress)
   console.log('bondingContract set: ' + bondingContract)
+
+  console.log('  === Fund bonding contract...')
+
+  await web3.eth.sendTransaction({to: bondingContract, from: accounts[1], value: web3.utils.toWei('5', 'ether')})
+
+
+  console.log('  === Double check values are correct...')
+  let tokenAddress = await logicInstance.tokenContract();
+  let bondingContract = await logicInstance.bondingContract();
+
+  console.log('tokenAddress set: ' + tokenAddress)
+  console.log('bondingContract set: ' + bondingContract)
+
+  let bondingBalance = await web3.eth.getBalance(bondingContract)
+  console.log('bondingCurve balance: ' + bondingBalance)
 };

@@ -44,6 +44,19 @@ contract Logic is Ownable {
         address newAmount
     );
 
+    event LogCharityAddressChanged
+    (
+        address byWhom,
+        address oldAddress,
+        address newAddress
+    );
+
+    event LogDonationReceived
+    (
+        address byWhom,
+        address amount
+    );
+
     modifier onlyOwner() {
         require(msg.sender == owner);
         _;
@@ -61,14 +74,41 @@ contract Logic is Ownable {
         _;
     }
 
-    // payable function calls donation function
+    /**
+    * @dev The fallback function - should call 'donate' function in Logic contract
+    */
+    function () public payable {
+        donate();
+    }
 
-    // donation function splits ETH, 90% to charityAddress, 10% to fund bonding curve
+    /**
+    * @dev donation function splits ETH, 90% to charityAddress, 10% to fund bonding curve
+    */
+    function donate() public payable returns (bool) {
+        require(charityAddress != address(0), "Charity address is not set correctly");
+        require(msg.value > 0, "Must include some ETH to donate");
+
+        // Make ETH distributions
+        uint256 charityAllocation = (msg.value).mul(0.9);
+        uint256 bondingAllocation = (msg.value).sub(charityAllocation);
+        sendToCharity(charityAllocation);
+        bondingContract.transfer(bondingAllocation);
+
+        // Mint the tokens - 10:1 ratio (e.g. for every 1 ETH sent, you get 10 tokens)
+        Token(tokenContract).mintToken(msg.sender, (msg.value).mul(10));
+
+        emit LogDonationReceived(msg.sender, msg.value);
+    }
     
-    // calculate how many tokens will be minted, return value
+    // TODO: - DAI integration: buy DAI with ETH, store in charityAddress
+    function sendToCharity(uint256 _amount) internal {
+        // this should auto convert to DAI
+        charityAddress.transfer(charityAllocation);
+    }
 
-    // DAI integration: buy DAI with ETH, store in charityAddress
-
+    /**
+    * @dev sell function for selling tokens to bonding curve
+    */
     function sell(uint256 _amount) public minimumBondingBalance returns (bool) {
         uint256 tokenBalanceOfSender = Token(tokenContract).balanceOf(msg.sender);
         require(_amount > 0 && tokenBalanceOfSender >= _amount, "Amount needs to be > 0 and tokenBalance >= amount to sell");
@@ -83,6 +123,9 @@ contract Logic is Ownable {
         BondingCurve(bondingContract).sendEth(amountOfEth, msg.sender);
     }
 
+    /**
+    * @dev calculate how much ETH should be returned for a certain amount of tokens
+    */
     function calculateReturn(uint256 _sellAmount, uint256 _tokenBalance) public view returns (uint256) {
         require(_tokenBalance >= _sellAmount, "User trying to sell more than they have");
         uint256 supply = Token(tokenContract).getSupply();
@@ -147,6 +190,15 @@ contract Logic is Ownable {
         uint256 oldAmount = minEth;
         minEth = _minEth;
         emit LogBondingContractChanged(msg.sender, oldAmount, _minEth);
+    }
+
+    /**
+    * @dev Set the 'charityAddress' to a different contract address
+    */
+    function setCharityAddress(address _charityAddress) public onlyOwner {
+        address oldAddress = charityAddress;
+        charityAddress = _charityAddress;
+        emit LogCharityAddressChanged(msg.sender, oldAddress, _charityAddress);
     }
 
 

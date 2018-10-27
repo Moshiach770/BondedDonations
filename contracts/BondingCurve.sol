@@ -30,6 +30,11 @@ contract BondingCurve is Ownable {
         address indexed account
     );
 
+    event LogEthReceived(
+        uint256 amount,
+        address indexed account
+    );
+
     
     // Enforce tokenContract only calls
     modifier onlyTokenContract() {
@@ -60,10 +65,12 @@ contract BondingCurve is Ownable {
 
     // payable function mints tokens to sender (donation), sends 90% to logic contract for chairty
     /**
-     * @dev The fallback function - should call 'donate' function in Logic contract
+     * @dev The fallback function - accepts all ETH as donations to bonding curve. Need this as
+     * logic contract transfers the ETH allocation here (i.e. can't use this fallback function to call
+     * donate() in Logic.sol)
      */
     function () public payable {
-        
+        emit LogEthReceived(msg.value, msg.sender);
     }
 
     /**

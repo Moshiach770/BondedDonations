@@ -10,6 +10,22 @@ contract BondingCurve is Ownable {
     // Where business logic resides
     address public logicContract;
 
+
+    event LogLogicContractChanged
+    (
+        address byWhom,
+        address oldContract,
+        address newContract
+    );
+
+    event LogTokenContractChanged
+    (
+        address byWhom,
+        address oldContract,
+        address newContract
+    );
+
+    
     // Enforce tokenContract only calls
     modifier onlyTokenContract() {
         require(msg.sender == tokenContract);
@@ -22,12 +38,10 @@ contract BondingCurve is Ownable {
         _;
     }
 
-    modifier onlyOwner() {
-        require(msg.sender == owner);
-        _;
+    constructor(address _logicContract, address _tokenContract) public {
+        setLogicContract(_logicContract);
+        setTokenContract(_tokenContract);
     }
-
-    // constructor takes tokenContract address and logicContract address
 
     // send eth to seller (onlyLogicContract can call)
 
@@ -35,8 +49,23 @@ contract BondingCurve is Ownable {
 
     // payable function mints tokens to sender (donation), sends 90% to logic contract for chairty
 
-    // only owner
-    //allow changing of tokenContract
-    //allow changing of logicContract
+    /**
+    * @dev Set the 'logicContract' to a different contract address
+    */
+    function setLogicContract(address _logicContract) public onlyOwner {
+        address oldContract = logicContract;
+        logicContract = _logicContract;
+        emit LogLogicContractChanged(msg.sender, oldContract, _logicContract);
+    }
+
+    /**
+    * @dev Set the 'tokenContract' to a different contract address
+    */
+    function setTokenContract(address _tokenContract) public onlyOwner {
+        address oldContract = tokenContract;
+        tokenContract = _tokenContract;
+        emit LogTokenContractChanged(msg.sender, oldContract, _tokenContract);
+    }
+
     //allow freezing (only logicContract)
 }

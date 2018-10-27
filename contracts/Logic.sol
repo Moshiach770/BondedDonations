@@ -19,6 +19,20 @@ contract Logic is Ownable {
     // KYC flag
     bool public kycEnabled;
 
+    event LogTokenContractChanged
+    (
+        address byWhom,
+        address oldContract,
+        address newContract
+    );
+
+    event LogBondingContractChanged
+    (
+        address byWhom,
+        address oldContract,
+        address newContract
+    );
+
     modifier onlyOwner() {
         require(msg.sender == owner);
         _;
@@ -48,8 +62,33 @@ contract Logic is Ownable {
     // see Bloom docs
 
     // only owner
-    //allow changing of tokenContract
-    //allow changing of bondingContract
+
+    /**
+    * @dev Set both the 'logicContract' and 'bondingContract' to different contract addresses in 1 tx
+    */
+    function setTokenAndBondingContract(address _tokenContract, address _bondingContract) public onlyOwner {
+        setTokenContract(_tokenContract);
+        setBondingContract(_bondingContract);
+    }
+
+    /**
+    * @dev Set the 'logicContract' to a different contract address
+    */
+    function setTokenContract(address _tokenContract) public onlyOwner {
+        address oldContract = tokenContract;
+        tokenContract = _tokenContract;
+        emit LogTokenContractChanged(msg.sender, oldContract, _tokenContract);
+    }
+
+    /**
+    * @dev Set the 'bondingContract' to a different contract address
+    */
+    function setBondingContract(address _bondingContract) public onlyOwner {
+        address oldContract = bondingContract;
+        bondingContract = _bondingContract;
+        emit LogBondingContractChanged(msg.sender, oldContract, _bondingContract);
+    }
+
     //allow freezing of everything
 
 }

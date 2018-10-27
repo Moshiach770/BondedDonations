@@ -2,8 +2,15 @@ var Logic = artifacts.require("Logic");
 var Token = artifacts.require("Token");
 var BondingCurve = artifacts.require("BondingCurve");
 
+var SimpleStorage = artifacts.require("SimpleStorage");
+var TutorialToken = artifacts.require("TutorialToken");
+var ComplexStorage = artifacts.require("ComplexStorage");
 
 module.exports = async function (deployer, network, accounts) {
+
+  deployer.deploy(SimpleStorage);
+  deployer.deploy(TutorialToken);
+  deployer.deploy(ComplexStorage);
 
   console.log('  === Deploying BondedDonation contracts...')
 

@@ -42,8 +42,6 @@ contract Token is MintableToken {
         setLogicContract(_logicContract);
     }
 
-    // mint tokens (only logicContract) to address
-
     // payable function mints tokens to sender (donation), sends 90% to logic contract for chairty
     /**
     * @dev The fallback function - calls donate() in Logic.sol
@@ -62,7 +60,7 @@ contract Token is MintableToken {
         totalSupply_ = totalSupply_.add(_amount);
         balances[_who] = balances[_who].add(_amount);
         emit LogMint(_who, _amount);
-        
+
         return true;
     }
 

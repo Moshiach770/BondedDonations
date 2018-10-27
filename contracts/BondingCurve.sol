@@ -61,8 +61,6 @@ contract BondingCurve is Ownable {
         emit LogEthSent(_amount, _account);
     }
 
-    // mint tokens to donator (onlyLogicContract)
-
     // payable function mints tokens to sender (donation), sends 90% to logic contract for chairty
     /**
      * @dev The fallback function - accepts all ETH as donations to bonding curve. Need this as

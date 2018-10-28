@@ -2,7 +2,7 @@ var Logic = artifacts.require("./Logic.sol");
 var Token = artifacts.require("./Token.sol");
 var BondingCurve = artifacts.require("./BondingCurve.sol");
 
-const truffleAssert = require('truffle-assertions');
+// const truffleAssert = require('truffle-assertions');
 
 contract('Logic', function (accounts) {
     const owner = accounts[0];

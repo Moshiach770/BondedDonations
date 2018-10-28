@@ -1,10 +1,11 @@
 pragma solidity ^0.4.24;
 
-import "openzeppelin-solidity/contracts/token/ERC20/MintableToken.sol";
+import "openzeppelin-solidity/contracts/token/ERC20/ERC20Mintable.sol";
+import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "./BondingCurve.sol";
 import "./Logic.sol";
 
-contract Token is MintableToken {
+contract Token is ERC20, Ownable {
 
     string public name = "CharityToken";
     string public symbol = "CHART";
@@ -57,10 +58,8 @@ contract Token is MintableToken {
         require(_who != address(0), "Invalid address");
         require(_amount > 0, "Invalid amount to mint");
 
-        totalSupply_ = totalSupply_.add(_amount);
-        balances[_who] = balances[_who].add(_amount);
+        _mint(_who, _amount);
         emit LogMint(_who, _amount);
-
         return true;
     }
 
@@ -68,10 +67,9 @@ contract Token is MintableToken {
      * @dev The burn function, copied from OpenZepplin's burnable token
      */
     function burn(address _who, uint256 _value) public onlyLogicContract {
-        require(_value <= balances[_who], "Burn amount needs to be <= to balance");
+        require(_value <= balanceOf(_who), "Burn amount needs to be <= to balance");
 
-        balances[_who] = balances[_who].sub(_value);
-        totalSupply_ = totalSupply_.sub(_value);
+        _burn(_who, _value);
         emit LogBurn(_who, _value);
     }
 

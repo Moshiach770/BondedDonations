@@ -62,11 +62,6 @@ contract Logic is Ownable {
         address indexed account
     );
 
-    modifier onlyOwner() {
-        require(msg.sender == owner);
-        _;
-    }
-
     modifier kycCheck() {
         if (kycEnabled) {
             // require whitelisted address (see Bloom docs?)

@@ -8,7 +8,7 @@ import "./Logic.sol";
 contract Token is ERC20, Ownable {
 
     string public name = "CharityToken";
-    string public symbol = "CHART";
+    string public symbol = "CHARITY";
     uint8 public decimals = 18;
 
     // Where business logic resides
@@ -41,14 +41,6 @@ contract Token is ERC20, Ownable {
 
     constructor(address _logicContract) public {
         setLogicContract(_logicContract);
-    }
-
-    // payable function mints tokens to sender (donation), sends 90% to logic contract for chairty
-    /**
-    * @dev The fallback function - calls donate() in Logic.sol
-    */
-    function () public payable {
-        Logic(logicContract).donate();
     }
 
     /**

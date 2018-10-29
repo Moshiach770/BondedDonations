@@ -45,8 +45,8 @@ contract('Logic', function (accounts) {
     })
 
     it("should allow donating and receive correct amount of tokens", async () => {
-        // let tx = await web3.eth.sendTransaction({to: logicAddress, from: owner, value: web3.utils.toWei('1', 'ether')})
-        let tx = await logic.donate({from: bob, value: web3.utils.toWei('1', 'ether')})
+        let tx = await web3.eth.sendTransaction({to: logicAddress, from: owner, value: web3.utils.toWei('1', 'ether')})
+        // let tx = await logic.donate({from: bob, value: web3.utils.toWei('1', 'ether')})
             // .on('LogDonationReceived', function(byWhom, amount) {
             //     assert.equal(bob, byWhom, "Incorrect donator emitted")
             //     assert.equal(web3.utils.toWei('1', 'ether'), amount, "Incorrect donated amount emitted")

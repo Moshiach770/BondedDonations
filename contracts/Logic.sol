@@ -75,14 +75,6 @@ contract Logic is Ownable {
     }
 
     /**
-    * @dev The fallback function - should call 'donate' function in Logic contract
-    */
-    function () public payable {
-        // Not working yet
-        require(donate(), "Donation did not complete successfully");
-    }
-
-    /**
     * @dev donation function splits ETH, 90% to charityAddress, 10% to fund bonding curve
     */
     function donate() public payable returns (bool) {
@@ -109,6 +101,7 @@ contract Logic is Ownable {
     // TODO: - DAI integration: buy DAI with ETH, store in charityAddress
     function sendToCharity(uint256 _amount) internal {
         // this should auto convert to DAI
+        // look into OasisDEX or Bancor on-chain tx
         charityAddress.transfer(_amount);
         emit LogCharityAllocationSent(_amount, msg.sender);
     }

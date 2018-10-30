@@ -153,6 +153,8 @@ class App extends Component {
     let web3 = this.state.web3
     let tokenBalance = web3.utils.fromWei(this.state.tokenInfo.tokenBalance, 'ether')
     let tokenSupply = web3.utils.fromWei(this.state.tokenInfo.tokenSupply, 'ether')
+    let portionOfSupply = ((tokenBalance / tokenSupply) * 100).toFixed(2)
+
     let bondingBalance = web3.utils.fromWei(this.state.bondingBalance, 'ether')
     let charityBalance = web3.utils.fromWei(this.state.charityBalance, 'ether')
     let myEthBalance = web3.utils.fromWei(this.state.myEthBalance, 'ether')
@@ -187,6 +189,7 @@ class App extends Component {
             <Heading>My Info</Heading>
             <Text>
               Token Balance: {tokenBalance} {tokenSymbol}<br />
+              My portion of the supply: {portionOfSupply > 0 ? portionOfSupply : 0}%<br />
               ETH Balance: {myEthBalance} ETH
             </Text>
           </Pane>

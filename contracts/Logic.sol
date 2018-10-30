@@ -134,9 +134,13 @@ contract Logic is Ownable {
         uint256 multiplier = 10**18;
 
         if (coolDownPeriod(msg.sender) <= 0) {
-            // price = ((tokens i have or # I want to sell) / (total token supply)) * ETH in contract
-            // using a multiplier due to EVM constraints
-            uint256 redeemableEth = (_sellAmount.mul(multiplier).div(supply).mul(bondingContract.balance)).div(multiplier);
+            // Price = (Portion of Supply ^ ((1/4) - Portion of Supply)) * (ETH in Pot / Token supply)
+            // NOT YET WORKING (problem with decimal precision for exponent)
+            uint256 portionOfSupply = (_tokenBalance.mul(multiplier).div(supply));
+            uint256 exponent = ((multiplier.div(multiplier).div(4*multiplier)).sub(portionOfSupply)).div(multiplier);
+            uint256 price = ((portionOfSupply**exponent).mul((bondingContract.balance).div(supply))).div(multiplier);
+            
+            uint256 redeemableEth = price.mul(_sellAmount);
             return redeemableEth;
         } else {
             return 0;

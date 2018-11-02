@@ -4,21 +4,10 @@ import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 
 contract BondingCurve is Ownable {
 
-    // Keep the balances of ERC20s
-    address public tokenContract;
-
     // Where business logic resides
     address public logicContract;
 
-
     event LogLogicContractChanged
-    (
-        address byWhom,
-        address indexed oldContract,
-        address newContract
-    );
-
-    event LogTokenContractChanged
     (
         address byWhom,
         address indexed oldContract,
@@ -35,22 +24,14 @@ contract BondingCurve is Ownable {
         address indexed account
     );
 
-    
-    // Enforce tokenContract only calls
-    modifier onlyTokenContract() {
-        require(msg.sender == tokenContract);
-        _;
-    }
-
     // Enforce logicContract only calls
     modifier onlyLogicContract() {
         require(msg.sender == logicContract);
         _;
     }
 
-    constructor(address _logicContract, address _tokenContract) public {
+    constructor(address _logicContract) public {
         setLogicContract(_logicContract);
-        setTokenContract(_tokenContract);
     }
 
     /**
@@ -61,7 +42,7 @@ contract BondingCurve is Ownable {
         emit LogEthSent(_amount, _account);
     }
 
-    // payable function mints tokens to sender (donation), sends 90% to logic contract for chairty
+    // payable function mints tokens to sender (donation), sends 90% to logic contract for charity
     /**
      * @dev The fallback function - accepts all ETH as donations to bonding curve. Need this as
      * logic contract transfers the ETH allocation here (i.e. can't use this fallback function to call
@@ -78,15 +59,6 @@ contract BondingCurve is Ownable {
         address oldContract = logicContract;
         logicContract = _logicContract;
         emit LogLogicContractChanged(msg.sender, oldContract, _logicContract);
-    }
-
-    /**
-    * @dev Set the 'tokenContract' to a different contract address
-    */
-    function setTokenContract(address _tokenContract) public onlyOwner {
-        address oldContract = tokenContract;
-        tokenContract = _tokenContract;
-        emit LogTokenContractChanged(msg.sender, oldContract, _tokenContract);
     }
 
     //allow freezing (only logicContract)

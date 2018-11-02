@@ -87,8 +87,6 @@ contract Logic is Ownable {
         uint256 bondingAllocation = (msg.value.mul(multiplier)).sub(charityAllocation).div(multiplier);
         sendToCharity(charityAllocation.div(multiplier));
 
-        // sendToCharity(0.9 ether);
-        // uint256 bondingAllocation = 0.1 ether;
         bondingContract.transfer(bondingAllocation);
 
         // Mint the tokens - 10:1 ratio (e.g. for every 1 ETH sent, you get 10 tokens)

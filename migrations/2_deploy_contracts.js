@@ -14,7 +14,7 @@ module.exports = async function (deployer, network, accounts) {
   await deployer.deploy(Token, Logic.address)
   let tokenInstance = await Token.deployed()
 
-  await deployer.deploy(BondingCurve, Logic.address, Token.address)
+  await deployer.deploy(BondingCurve, Logic.address)
   let bondingInstance = await BondingCurve.deployed()
 
   await logicInstance.setTokenAndBondingContract(Token.address, BondingCurve.address)

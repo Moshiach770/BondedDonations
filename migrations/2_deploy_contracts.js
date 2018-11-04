@@ -1,6 +1,6 @@
 var Logic = artifacts.require("Logic");
 var Token = artifacts.require("Token");
-var BondingCurve = artifacts.require("BondingCurve");
+var BondingCurveVault = artifacts.require("BondingCurveVault");
 
 module.exports = async function (deployer, network, accounts) {
 
@@ -14,10 +14,10 @@ module.exports = async function (deployer, network, accounts) {
   await deployer.deploy(Token, Logic.address)
   let tokenInstance = await Token.deployed()
 
-  await deployer.deploy(BondingCurve, Logic.address)
-  let bondingInstance = await BondingCurve.deployed()
+  await deployer.deploy(BondingCurveVault, Logic.address)
+  let bondingVaultInstance = await BondingCurveVault.deployed()
 
-  await logicInstance.setTokenAndBondingContract(Token.address, BondingCurve.address)
+  await logicInstance.setTokenAndBondingContract(Token.address, BondingCurveVault.address)
 
   console.log('  === Double check values are correct...')
   let tokenAddress = await logicInstance.tokenContract();

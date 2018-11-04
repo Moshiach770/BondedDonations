@@ -2,7 +2,7 @@ pragma solidity ^0.4.24;
 
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 
-contract BondingCurve is Ownable {
+contract BondingCurveVault is Ownable {
 
     // Where business logic resides
     address public logicContract;

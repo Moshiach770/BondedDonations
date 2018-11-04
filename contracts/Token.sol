@@ -1,9 +1,7 @@
 pragma solidity ^0.4.24;
 
-import "openzeppelin-solidity/contracts/token/ERC20/ERC20Mintable.sol";
+import "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
-import "./BondingCurve.sol";
-import "./Logic.sol";
 
 contract Token is ERC20, Ownable {
 

@@ -2,7 +2,7 @@ pragma solidity ^0.4.24;
 
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
-import "./BondingCurve.sol";
+import "./BondingCurveVault.sol";
 import "./Token.sol";
 
 contract Logic is Ownable {
@@ -118,7 +118,7 @@ contract Logic is Ownable {
         Token(tokenContract).burn(msg.sender, _amount);
 
         // sendEth to msg.sender from bonding curve
-        BondingCurve(bondingContract).sendEth(amountOfEth, msg.sender);
+        BondingCurveVault(bondingContract).sendEth(amountOfEth, msg.sender);
     }
 
     /**

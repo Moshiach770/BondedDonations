@@ -1,6 +1,6 @@
 var Logic = artifacts.require("./Logic.sol");
 var Token = artifacts.require("./Token.sol");
-var BondingCurve = artifacts.require("./BondingCurve.sol");
+var BondingCurveVault = artifacts.require("./BondingCurveVault.sol");
 
 // const truffleAssert = require('truffle-assertions');
 
@@ -11,7 +11,7 @@ contract('Logic', function (accounts) {
 
     let logic;
     let token;
-    let bondingCurve;
+    let bondingCurveVault;
 
     let logicAddress;
     let tokenAddress;
@@ -23,7 +23,7 @@ contract('Logic', function (accounts) {
 
         logic = await Logic.deployed();
         token = await Token.deployed();
-        bondingCurve = await BondingCurve.deployed();
+        bondingCurveVault = await BondingCurveVault.deployed();
 
         // Get addresses
         logicAddress = logic.address;

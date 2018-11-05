@@ -2,7 +2,7 @@ pragma solidity ^0.4.24;
 
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
-import "./BondingCurve.sol";
+import "./BondingCurveVault.sol";
 import "./Token.sol";
 
 contract Logic is Ownable {
@@ -12,13 +12,7 @@ contract Logic is Ownable {
     address public tokenContract;
 
     // Bonding curve ETH
-    address public bondingContract;
-
-    // Charity address
-    address public charityAddress;
-
-    // KYC flag
-    bool public kycEnabled;
+    address public bondingVault;
 
     // Minimum ETH balance for valid bonding curve
     uint256 public minEth;
@@ -30,7 +24,7 @@ contract Logic is Ownable {
         address newContract
     );
 
-    event LogBondingContractChanged
+    event LogBondingVaultChanged
     (
         address byWhom,
         address oldContract,
@@ -44,66 +38,33 @@ contract Logic is Ownable {
         uint256 newAmount
     );
 
-    event LogCharityAddressChanged
-    (
-        address byWhom,
-        address oldAddress,
-        address newAddress
-    );
-
-    event LogDonationReceived
-    (
-        address byWhom,
-        uint256 amount
-    );
-
-    event LogCharityAllocationSent(
-        uint256 amount,
-        address indexed account
-    );
-
-    modifier kycCheck() {
-        if (kycEnabled) {
-            // require whitelisted address (see Bloom docs?)
-        }
-        _;
-    }
-
     modifier minimumBondingBalance() {
-        require(bondingContract.balance >= minEth, "Not enough ETH in bonding contract");
+        require(bondingVault.balance >= minEth, "Not enough ETH in bonding vault contract");
         _;
     }
 
     /**
-    * @dev donation function splits ETH, 90% to charityAddress, 10% to fund bonding curve
-    */
-    function donate() public payable returns (bool) {
-        require(charityAddress != address(0), "Charity address is not set correctly");
-        require(msg.value > 0, "Must include some ETH to donate");
-
-        // Make ETH distributions
-        uint256 multiplier = 100;
-        uint256 charityAllocation = (msg.value).mul(90); // 90% with multiplier
-        uint256 bondingAllocation = (msg.value.mul(multiplier)).sub(charityAllocation).div(multiplier);
-        sendToCharity(charityAllocation.div(multiplier));
-
-        // sendToCharity(0.9 ether);
-        // uint256 bondingAllocation = 0.1 ether;
-        bondingContract.transfer(bondingAllocation);
-
-        // Mint the tokens - 10:1 ratio (e.g. for every 1 ETH sent, you get 10 tokens)
-        bool minting = Token(tokenContract).mintToken(msg.sender, (msg.value).mul(10));
-        emit LogDonationReceived(msg.sender, msg.value);
-
-        return minting;
+     * @dev The fallback function, which is used to 'fund' the Vault
+     * TODO: To take from Khana Framework
+     */
+    function () public payable {
+        bondingVault.transfer(msg.value);
     }
-    
-    // TODO: - DAI integration: buy DAI with ETH, store in charityAddress
-    function sendToCharity(uint256 _amount) internal {
-        // this should auto convert to DAI
-        // look into OasisDEX or Bancor on-chain tx
-        charityAddress.transfer(_amount);
-        emit LogCharityAllocationSent(_amount, msg.sender);
+
+    /**
+    * @dev this is a 'general' award method for the Bonding Curve, to be taken from Khana Framework.
+    * TODO: This method is supposed to be called by authorized accounts only (i.e. 'admins')
+    * which might be not a case for custmomizations, like 'Donations' where an 'external' action (donation) must be awarded.
+    * For such cases the sub-contract must be added to the authorized accounts list
+    */
+    function award(
+        address _account,
+        uint256 _amount,
+        string _ipfsHash
+    )
+    public
+    {
+        Token(tokenContract).mintToken(_account, _amount);
     }
 
     /**
@@ -120,7 +81,7 @@ contract Logic is Ownable {
         Token(tokenContract).burn(msg.sender, _amount);
 
         // sendEth to msg.sender from bonding curve
-        BondingCurve(bondingContract).sendEth(amountOfEth, msg.sender);
+        BondingCurveVault(bondingVault).sendEth(amountOfEth, msg.sender);
     }
 
     /**
@@ -138,7 +99,7 @@ contract Logic is Ownable {
             // NOT YET WORKING (problem with decimal precision for exponent)
             uint256 portionOfSupply = (_tokenBalance.mul(multiplier).div(supply));
             uint256 exponent = ((multiplier.div(multiplier).div(4*multiplier)).sub(portionOfSupply)).div(multiplier);
-            uint256 price = ((portionOfSupply**exponent).mul((bondingContract.balance).div(supply))).div(multiplier);
+            uint256 price = ((portionOfSupply**exponent).mul((bondingVault.balance).div(supply))).div(multiplier);
             
             uint256 redeemableEth = price.mul(_sellAmount);
             return redeemableEth;
@@ -155,18 +116,12 @@ contract Logic is Ownable {
         return 0;
     }
 
-    // KYC logic - stretch goals
-    // add donator to whitelist
-    // see Bloom docs
-
-    // only owner
-
     /**
-    * @dev Set both the 'logicContract' and 'bondingContract' to different contract addresses in 1 tx
+    * @dev Set both the 'logicContract' and 'bondingVault' to different contract addresses in 1 tx
     */
-    function setTokenAndBondingContract(address _tokenContract, address _bondingContract) public onlyOwner {
+    function setTokenAndBondingVault(address _tokenContract, address _bondingVaultContract) public onlyOwner {
         setTokenContract(_tokenContract);
-        setBondingContract(_bondingContract);
+        setBondingVault(_bondingVaultContract);
     }
 
     /**
@@ -179,12 +134,12 @@ contract Logic is Ownable {
     }
 
     /**
-    * @dev Set the 'bondingContract' to a different contract address
+    * @dev Set the 'bondingVault' to a different contract address
     */
-    function setBondingContract(address _bondingContract) public onlyOwner {
-        address oldContract = bondingContract;
-        bondingContract = _bondingContract;
-        emit LogBondingContractChanged(msg.sender, oldContract, _bondingContract);
+    function setBondingVault(address _bondingVault) public onlyOwner {
+        address oldContract = bondingVault;
+        bondingVault = _bondingVault;
+        emit LogBondingVaultChanged(msg.sender, oldContract, _bondingVault);
     }
 
     /**
@@ -194,15 +149,6 @@ contract Logic is Ownable {
         uint256 oldAmount = minEth;
         minEth = _minEth;
         emit LogMinEthChanged(msg.sender, oldAmount, _minEth);
-    }
-
-    /**
-    * @dev Set the 'charityAddress' to a different contract address
-    */
-    function setCharityAddress(address _charityAddress) public onlyOwner {
-        address oldAddress = charityAddress;
-        charityAddress = _charityAddress;
-        emit LogCharityAddressChanged(msg.sender, oldAddress, _charityAddress);
     }
 
     //allow freezing of everything

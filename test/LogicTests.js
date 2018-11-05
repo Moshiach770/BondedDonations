@@ -1,34 +1,34 @@
-var Logic = artifacts.require("./Logic.sol");
+var DonationLogic = artifacts.require("./DonationLogic.sol");
 var Token = artifacts.require("./Token.sol");
-var BondingCurve = artifacts.require("./BondingCurve.sol");
+var BondingCurveVault = artifacts.require("./BondingCurveVault.sol");
 
 // const truffleAssert = require('truffle-assertions');
 
-contract('Logic', function (accounts) {
+contract('DonationLogic', function (accounts) {
     const owner = accounts[0];
     const alice = accounts[1];
     const bob = accounts[2];
 
     let logic;
     let token;
-    let bondingCurve;
+    let bondingCurveVault;
 
     let logicAddress;
     let tokenAddress;
-    let bondingContract;
+    let bondingVault;
 
 
     beforeEach('setup contract for each test', async () => {
         console.log("Running new test")
 
-        logic = await Logic.deployed();
+        logic = await DonationLogic.deployed();
         token = await Token.deployed();
-        bondingCurve = await BondingCurve.deployed();
+        bondingCurveVault = await BondingCurveVault.deployed();
 
         // Get addresses
         logicAddress = logic.address;
         tokenAddress = await logic.tokenContract();
-        bondingContract = await logic.bondingContract();
+        bondingVault = await logic.bondingVault();
 
     });
 
@@ -69,7 +69,7 @@ contract('Logic', function (accounts) {
         //     return ev.byWhom === bob && ev.amount === web3.utils.toWei('1', 'ether');
         // });
 
-        let balanceOfBondingCurve = await web3.eth.getBalance(bondingContract)
+        let balanceOfBondingCurve = await web3.eth.getBalance(bondingVault)
         assert.equal(balanceOfBondingCurve, web3.utils.toWei('0.1', 'ether'), "Incorrect bonding curve balance")
 
         let charityAddress = await logic.charityAddress()
@@ -82,7 +82,7 @@ contract('Logic', function (accounts) {
 
     it("should allow selling and receive correct amount of ETH", async () => {
         let tokenBalanceOfDonater = await token.balanceOf(bob)
-        let balanceOfBondingCurve = await web3.eth.getBalance(bondingContract)
+        let balanceOfBondingCurve = await web3.eth.getBalance(bondingVault)
 
         // Calculate return
         let supply = await token.getSupply()
@@ -103,7 +103,7 @@ contract('Logic', function (accounts) {
             // })
        
         let newTokenBalanceOfDonator = await token.balanceOf(bob)
-        let newBalanceOfBondingCurve = await web3.eth.getBalance(bondingContract)
+        let newBalanceOfBondingCurve = await web3.eth.getBalance(bondingVault)
 
         let expectedTokenBalanceOfDonator = 0
         let expectedBalanceOfBondingCurve = web3.utils.toBN(balanceOfBondingCurve).sub(redeemableEth).toString()

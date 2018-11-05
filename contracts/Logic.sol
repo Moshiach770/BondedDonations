@@ -2,17 +2,15 @@ pragma solidity ^0.4.24;
 
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
-import "./BondingCurveVault.sol";
-import "./Token.sol";
 
 contract Logic is Ownable {
     using SafeMath for uint256;
 
     // Keep the balances of ERC20s
-    address public tokenContract;
+    TokenInterface public tokenContract;
 
     // Bonding curve ETH
-    address public bondingVault;
+    VaultInterface public bondingVault;
 
     // Minimum ETH balance for valid bonding curve
     uint256 public minEth;
@@ -48,7 +46,7 @@ contract Logic is Ownable {
      * TODO: To take from Khana Framework
      */
     function () public payable {
-        bondingVault.transfer(msg.value);
+        address(bondingVault).transfer(msg.value);
     }
 
     /**
@@ -64,24 +62,24 @@ contract Logic is Ownable {
     )
     public
     {
-        Token(tokenContract).mintToken(_account, _amount);
+        tokenContract.mintToken(_account, _amount);
     }
 
     /**
     * @dev sell function for selling tokens to bonding curve
     */
     function sell(uint256 _amount) public minimumBondingBalance returns (bool) {
-        uint256 tokenBalanceOfSender = Token(tokenContract).balanceOf(msg.sender);
+        uint256 tokenBalanceOfSender = tokenContract.balanceOf(msg.sender);
         require(_amount > 0 && tokenBalanceOfSender >= _amount, "Amount needs to be > 0 and tokenBalance >= amount to sell");
 
         // calculate sell return
         uint256 amountOfEth = calculateReturn(_amount, tokenBalanceOfSender);
 
         // burn tokens
-        Token(tokenContract).burn(msg.sender, _amount);
+        tokenContract.burn(msg.sender, _amount);
 
         // sendEth to msg.sender from bonding curve
-        BondingCurveVault(bondingVault).sendEth(amountOfEth, msg.sender);
+        bondingVault.sendEth(amountOfEth, msg.sender);
     }
 
     /**
@@ -89,7 +87,7 @@ contract Logic is Ownable {
     */
     function calculateReturn(uint256 _sellAmount, uint256 _tokenBalance) public view returns (uint256) {
         require(_tokenBalance >= _sellAmount, "User trying to sell more than they have");
-        uint256 supply = Token(tokenContract).getSupply();
+        uint256 supply = tokenContract.getSupply();
 
         // For EVM accuracy
         uint256 multiplier = 10**18;
@@ -99,7 +97,7 @@ contract Logic is Ownable {
             // NOT YET WORKING (problem with decimal precision for exponent)
             uint256 portionOfSupply = (_tokenBalance.mul(multiplier).div(supply));
             uint256 exponent = ((multiplier.div(multiplier).div(4*multiplier)).sub(portionOfSupply)).div(multiplier);
-            uint256 price = ((portionOfSupply**exponent).mul((bondingVault.balance).div(supply))).div(multiplier);
+            uint256 price = ((portionOfSupply**exponent).mul((address(bondingVault).balance).div(supply))).div(multiplier);
             
             uint256 redeemableEth = price.mul(_sellAmount);
             return redeemableEth;
@@ -129,7 +127,7 @@ contract Logic is Ownable {
     */
     function setTokenContract(address _tokenContract) public onlyOwner {
         address oldContract = tokenContract;
-        tokenContract = _tokenContract;
+        tokenContract = TokenInterface(_tokenContract);
         emit LogTokenContractChanged(msg.sender, oldContract, _tokenContract);
     }
 
@@ -138,7 +136,7 @@ contract Logic is Ownable {
     */
     function setBondingVault(address _bondingVault) public onlyOwner {
         address oldContract = bondingVault;
-        bondingVault = _bondingVault;
+        bondingVault = VaultInterface(_bondingVault);
         emit LogBondingVaultChanged(msg.sender, oldContract, _bondingVault);
     }
 
@@ -152,5 +150,29 @@ contract Logic is Ownable {
     }
 
     //allow freezing of everything
+
+}
+
+/**
+ * @title Abstraction, used to interact with the Bonding Curve Vault
+ */
+interface VaultInterface {
+
+    function sendEth(uint256 _amount, address _account) external;
+
+}
+
+/**
+ * @title Abstraction, used to interact with the Bonding Curve Token
+ */
+interface TokenInterface {
+
+    function mintToken(address _who, uint256 _amount) external returns (bool);
+
+    function balanceOf(address owner) external view returns (uint256);
+
+    function burn(address _who, uint256 _value) external;
+
+    function getSupply() external view returns (uint256);
 
 }

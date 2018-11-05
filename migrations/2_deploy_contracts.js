@@ -7,13 +7,15 @@ module.exports = async function (deployer, network, accounts) {
   console.log('  === Deploying BondedDonation contracts...')
 
   // Deploy DonationLogic contract
-  await deployer.deploy(DonationLogic)
+  let redCross = '0x726788048e8b1f3d00ea91f5543c7beb50bb1c14';
+  await deployer.deploy(DonationLogic, redCross)
   let logicInstance = await DonationLogic.deployed()
 
   // Deploy TokenContract
   await deployer.deploy(Token, DonationLogic.address)
   let tokenInstance = await Token.deployed()
 
+  // Deploy Vault
   await deployer.deploy(BondingCurveVault, DonationLogic.address)
   let bondingVaultInstance = await BondingCurveVault.deployed()
 

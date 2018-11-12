@@ -12,13 +12,10 @@ contract('DonationLogic', function (accounts) {
     let logic;
     let token;
     let bondingCurveVault;
-
     let logicAddress;
     let tokenAddress;
     let bondingVault;
-
     let charityAddress;
-
 
     beforeEach('setup contract for each test', async () => {
         console.log("Running new test")
@@ -114,5 +111,14 @@ contract('DonationLogic', function (accounts) {
 
         assert.equal(newTokenBalanceOfDonator, expectedTokenBalanceOfDonator, "tokenBalance of donator is incorrect")
         assert.equal(newBalanceOfBondingCurve, expectedBalanceOfBondingCurve, "balance of bonding curve is incorrect")
+    })
+
+    it("should fail on default fallback", async () => {
+        try {
+            await web3.eth.sendTransaction({to: logicAddress, from: bob, value: web3.utils.toWei('1', 'wei')});
+            assert.ok(false, 'contract must have thrown an error');
+        } catch (error) {
+            assert.ok(true, 'no fallback ');
+        }
     })
 })

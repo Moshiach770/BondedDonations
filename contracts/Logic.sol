@@ -3,6 +3,9 @@ pragma solidity ^0.4.24;
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
+import "./VaultInterface.sol";
+import "./TokenInterface.sol";
+
 contract Logic is Ownable {
     using SafeMath for uint256;
 
@@ -42,14 +45,16 @@ contract Logic is Ownable {
     }
 
     /**
-     * @dev The fallback function, which is used to 'fund' the Vault
-     * TODO: To take from Khana Framework
-     * TODO test whether it will work at all due to 2300 gas limit. This is not enough for pretty much anything
+     * @dev No fallback is allowed, use sponsor() to fund the Bonding Curve
      */
     function () public payable {
-        sponsor();
+        revert();
     }
 
+    /**
+     * @dev Sponsoring the Bonding Curve with ETH. Note: this will not mint the tokens in return
+     * TODO: To take from Khana Framework
+     */
     function sponsor() public payable {
         require(bondingVault != address(0), "Vault is missing");
         bondingVault.transfer(msg.value);
@@ -131,7 +136,7 @@ contract Logic is Ownable {
     /**
     * @dev Set the 'logicContract' to a different contract address
     */
-    function setTokenContract(address _tokenContract) internal onlyOwner {
+    function setTokenContract(address _tokenContract) public onlyOwner {
         address oldContract = tokenContract;
         tokenContract = _tokenContract;
         emit LogTokenContractChanged(msg.sender, oldContract, _tokenContract);
@@ -140,7 +145,7 @@ contract Logic is Ownable {
     /**
     * @dev Set the 'bondingVault' to a different contract address
     */
-    function setBondingVault(address _bondingVault) internal onlyOwner {
+    function setBondingVault(address _bondingVault) public onlyOwner {
         address oldContract = bondingVault;
         bondingVault = _bondingVault;
         emit LogBondingVaultChanged(msg.sender, oldContract, _bondingVault);
@@ -154,31 +159,4 @@ contract Logic is Ownable {
         minEth = _minEth;
         emit LogMinEthChanged(msg.sender, oldAmount, _minEth);
     }
-
-    //allow freezing of everything
-
-}
-
-/**
- * @title Abstraction, used to interact with the Bonding Curve Vault
- */
-interface VaultInterface {
-
-    function sendEth(uint256 _amount, address _account) external;
-
-}
-
-/**
- * @title Abstraction, used to interact with the Bonding Curve Token
- */
-interface TokenInterface {
-
-    function mintToken(address _who, uint256 _amount) external returns (bool);
-
-    function balanceOf(address owner) external view returns (uint256);
-
-    function burn(address _who, uint256 _value) external;
-
-    function getSupply() external view returns (uint256);
-
 }

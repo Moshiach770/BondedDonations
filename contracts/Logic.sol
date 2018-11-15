@@ -2,8 +2,9 @@ pragma solidity ^0.4.24;
 
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
-import "./BondingCurveVault.sol";
-import "./Token.sol";
+
+import "./VaultInterface.sol";
+import "./TokenInterface.sol";
 
 contract Logic is Ownable {
     using SafeMath for uint256;
@@ -44,10 +45,18 @@ contract Logic is Ownable {
     }
 
     /**
-     * @dev The fallback function, which is used to 'fund' the Vault
-     * TODO: To take from Khana Framework
+     * @dev No fallback is allowed, use sponsor() to fund the Bonding Curve
      */
     function () public payable {
+        revert();
+    }
+
+    /**
+     * @dev Sponsoring the Bonding Curve with ETH. Note: this will not mint the tokens in return
+     * TODO: To take from Khana Framework
+     */
+    function sponsor() public payable {
+        require(bondingVault != address(0), "Vault is missing");
         bondingVault.transfer(msg.value);
     }
 
@@ -64,24 +73,24 @@ contract Logic is Ownable {
     )
     public
     {
-        Token(tokenContract).mintToken(_account, _amount);
+        TokenInterface(tokenContract).mintToken(_account, _amount);
     }
 
     /**
     * @dev sell function for selling tokens to bonding curve
     */
     function sell(uint256 _amount) public minimumBondingBalance returns (bool) {
-        uint256 tokenBalanceOfSender = Token(tokenContract).balanceOf(msg.sender);
+        uint256 tokenBalanceOfSender = TokenInterface(tokenContract).balanceOf(msg.sender);
         require(_amount > 0 && tokenBalanceOfSender >= _amount, "Amount needs to be > 0 and tokenBalance >= amount to sell");
 
         // calculate sell return
         uint256 amountOfEth = calculateReturn(_amount, tokenBalanceOfSender);
 
         // burn tokens
-        Token(tokenContract).burn(msg.sender, _amount);
+        TokenInterface(tokenContract).burn(msg.sender, _amount);
 
         // sendEth to msg.sender from bonding curve
-        BondingCurveVault(bondingVault).sendEth(amountOfEth, msg.sender);
+        VaultInterface(bondingVault).sendEth(amountOfEth, msg.sender);
     }
 
     /**
@@ -89,7 +98,7 @@ contract Logic is Ownable {
     */
     function calculateReturn(uint256 _sellAmount, uint256 _tokenBalance) public view returns (uint256) {
         require(_tokenBalance >= _sellAmount, "User trying to sell more than they have");
-        uint256 supply = Token(tokenContract).getSupply();
+        uint256 supply = TokenInterface(tokenContract).getSupply();
 
         // For EVM accuracy
         uint256 multiplier = 10**18;
@@ -150,7 +159,4 @@ contract Logic is Ownable {
         minEth = _minEth;
         emit LogMinEthChanged(msg.sender, oldAmount, _minEth);
     }
-
-    //allow freezing of everything
-
 }

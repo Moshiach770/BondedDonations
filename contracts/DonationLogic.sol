@@ -39,6 +39,10 @@ contract DonationLogic is Logic {
         _;
     }
 
+    constructor(address _charityAddress) public {
+        charityAddress = _charityAddress;
+    }
+
     /**
     * @dev donation function splits ETH, 90% to charityAddress, 10% to fund bonding curve
     */
@@ -53,7 +57,8 @@ contract DonationLogic is Logic {
         sendToCharity(charityAllocation.div(multiplier));
 
         //fund the Logic with ETH calling fallback function
-        address(this).transfer(bondingAllocation);
+        //TODO Test if charity + bonding amounts are still less than total msg.value due to rounding
+        this.sponsor.value(bondingAllocation)();
 
         // Mint the tokens - 10:1 ratio (e.g. for every 1 ETH sent, you get 10 tokens)
         super.award(msg.sender, (msg.value).mul(10),  'Donation received');

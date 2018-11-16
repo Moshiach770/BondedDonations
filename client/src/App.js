@@ -118,7 +118,8 @@ class App extends Component {
     let { accounts, logicContract } = this.state
 
     let sellAmount = this.state.web3.utils.toWei(event.target.amount.value, 'ether')
-    let result = await logicContract.calculateReturn(sellAmount, this.state.tokenInfo.tokenSupply)
+    let tokenBalance = (await this.state.tokenContract.balanceOf(accounts[0])).toString()
+    let result = await logicContract.calculateReturn(sellAmount, tokenBalance)
     let price = result.finalPrice.toString()
     let ethReturn = result.redeemableEth.toString()
 

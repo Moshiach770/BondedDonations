@@ -10,7 +10,7 @@
  
 pragma solidity ^0.4.21;
 
-contract FractionalExponents  {
+contract FractionalExponents {
 
     uint256 private constant ONE = 1;
     uint32 private constant MAX_WEIGHT = 1000000;

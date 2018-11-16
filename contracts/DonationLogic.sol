@@ -2,10 +2,10 @@ pragma solidity ^0.4.24;
 
 import "./Logic.sol";
 
-
 /**
  * @title Proof of Concept contract for Donation customization of Bonding Curve Logic
  */
+ 
 contract DonationLogic is Logic {
 
     // Charity address

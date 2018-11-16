@@ -5,7 +5,7 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
 import "./VaultInterface.sol";
 import "./TokenInterface.sol";
-import "./FractionalExponent.sol";
+import "./FractionalExponents.sol";
 
 contract Logic is Ownable {
     using SafeMath for uint256;
@@ -21,6 +21,13 @@ contract Logic is Ownable {
 
     // Minimum ETH balance for valid bonding curve
     uint256 public minEth;
+
+    event LogTokenSell
+    (
+        address byWhom,
+        uint256 price,
+        uint256 amountOfEth
+    );
 
     event LogTokenContractChanged
     (
@@ -95,21 +102,34 @@ contract Logic is Ownable {
         require(_amount > 0 && tokenBalanceOfSender >= _amount, "Amount needs to be > 0 and tokenBalance >= amount to sell");
 
         // calculate sell return
-        uint256 amountOfEth = calculateReturn(_amount, tokenBalanceOfSender);
+        (uint256 price, uint256 amountOfEth) = calculateReturn(_amount, tokenBalanceOfSender);
 
         // burn tokens
         TokenInterface(tokenContract).burn(msg.sender, _amount);
 
         // sendEth to msg.sender from bonding curve
         VaultInterface(bondingVault).sendEth(amountOfEth, msg.sender);
+
+        emit LogTokenSell(msg.sender, price, amountOfEth);
     }
 
     /**
      * @dev calculate how much ETH should be returned for a certain amount of tokens
      * @notice using version 2.1 of Khana formula - see documentation for more details
+     * @notice the first returned value (finalPrice) includes the 10^18 multiplier.
     */
-    function calculateReturn(uint256 _sellAmount, uint256 _tokenBalance) public view returns (uint256) {
-        require(exponentContract != address(0), "exponentContract must be set to valid address")
+    function calculateReturn(
+        uint256 _sellAmount, 
+        uint256 _tokenBalance
+    ) 
+        public 
+        view 
+        returns (
+            uint256 finalPrice, 
+            uint256 redeemableEth
+        ) 
+    {
+        require(exponentContract != address(0), "exponentContract must be set to valid address");
         require(_tokenBalance >= _sellAmount, "User trying to sell more than they have");
         uint256 tokenSupply = TokenInterface(tokenContract).getSupply();
         uint256 ethInVault = bondingVault.balance;
@@ -127,13 +147,14 @@ contract Logic is Ownable {
             // b/8 * (funds backing curve / token supply)
             uint256 interimPrice = (exponentResult.div(8)).mul(ethInVault.mul(multiplier).div(tokenSupply)).div(multiplier);
 
-            // cleaning up multipliers
-            uint256 finalPrice = (interimPrice.mul(multiplier)).div(2**uint256(precision));
+            // get final price (with multiplier)
+            finalPrice = (interimPrice.mul(multiplier)).div(2**uint256(precision));
             
-            uint256 redeemableEth = finalPrice.mul(_sellAmount);
-            return redeemableEth;
+            // redeemable ETH (without multiplier)
+            redeemableEth = finalPrice.mul(_sellAmount).div(multiplier);
+            return (finalPrice, redeemableEth);
         } else {
-            return 0;
+            return (0,0);
         }
     }
 

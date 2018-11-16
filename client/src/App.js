@@ -2,9 +2,9 @@ import React, { Component } from "react";
 import getWeb3 from "./utils/getWeb3";
 import truffleContract from "truffle-contract";
 
-import LogicContract from "./contracts/Logic.json";
+import LogicContract from "./contracts/DonationLogic.json";
 import TokenContract from "./contracts/Token.json";
-import BondingContract from "./contracts/BondingCurve.json"
+import BondingContract from "./contracts/BondingCurveVault.json"
 
 import { Pane, Text, Heading, TextInputField, Button } from 'evergreen-ui'
 
@@ -46,9 +46,9 @@ class App extends Component {
       const logicInstance = await logicContract.deployed();
 
       let charityAddress = await logicInstance.charityAddress()
-      let charityBalance = charityAddress != 0x0000000000000000000000000000000000000000 ? await web3.eth.getBalance(charityAddress) : '0'
+      let charityBalance = charityAddress !== 0x0000000000000000000000000000000000000000 ? await web3.eth.getBalance(charityAddress) : '0'
 
-      let isOwner = (await logicInstance.owner()) == accounts[0]
+      let isOwner = (await logicInstance.owner()) === accounts[0]
 
       // Get tokenContract instance
       const tokenContract = truffleContract(TokenContract)
@@ -96,7 +96,6 @@ class App extends Component {
     event.preventDefault()
     let { accounts, logicContract } = this.state
 
-
     await logicContract.setCharityAddress(event.target.address.value, { from: accounts[0], gas: 100000, gasPrice: this.state.web3.utils.toWei('5', 'gwei') })
 
     let response = await logicContract.charityAddress()
@@ -119,11 +118,18 @@ class App extends Component {
     let { accounts, logicContract } = this.state
 
     let sellAmount = this.state.web3.utils.toWei(event.target.amount.value, 'ether')
-    let calculatedReturn = await logicContract.calculateReturn(sellAmount, this.state.tokenInfo.tokenSupply)
-    let alert = window.confirm("You will receive " + this.state.web3.utils.fromWei(calculatedReturn, 'ether') + ' ETH in return for ' + this.state.web3.utils.fromWei(sellAmount, 'ether') + ' ' + this.state.tokenInfo.tokenSymbol + '. Are you sure?')
+    let result = await logicContract.calculateReturn(sellAmount, this.state.tokenInfo.tokenSupply)
+    let price = result.finalPrice.toString()
+    let ethReturn = result.redeemableEth.toString()
+
+    let alert = window.confirm("You will receive " + this.state.web3.utils.fromWei(ethReturn, 'ether') + 
+                              ' ETH (' + this.state.web3.utils.fromWei(price, 'ether') + ' ETH per ' +
+                              this.state.tokenInfo.tokenSymbol + ')' +
+                              ' in return for ' + this.state.web3.utils.fromWei(sellAmount, 'ether') + 
+                              ' ' + this.state.tokenInfo.tokenSymbol + '. Are you sure?')
 
     if (alert === true) {
-      await logicContract.sell(sellAmount, { from: accounts[0], gas: 100000, gasPrice: this.state.web3.utils.toWei('5', 'gwei') })
+      await logicContract.sell(sellAmount, { from: accounts[0], gas: 300000, gasPrice: this.state.web3.utils.toWei('5', 'gwei') })
     } else {
       console.log('sell cancelled')
     }

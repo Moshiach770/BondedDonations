@@ -36,5 +36,17 @@ If Alice decides not to refer any of her friends, then the tokens she received w
 ## Set up
 
 1. Ensure you have truffle 5 beta installed
+```
+npm uninstall -g truffle
+npm install -g truffle@beta
+```
 2. Go to `client` directory and `npm install`
 3. In the `client` directory, do `npm run start`
+4. Run something like Ganache and migrate contracts to your local network
+
+
+If you need to go back to truffle 4, simply:
+```
+npm uninstall -g truffle
+npm install -g truffle
+```

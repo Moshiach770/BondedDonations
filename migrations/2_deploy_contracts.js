@@ -1,6 +1,7 @@
 var DonationLogic = artifacts.require("DonationLogic");
 var Token = artifacts.require("Token");
 var BondingCurveVault = artifacts.require("BondingCurveVault");
+var FractionalExponents = artifacts.require("FractionalExponents");
 
 module.exports = async function (deployer, network, accounts) {
 
@@ -19,27 +20,26 @@ module.exports = async function (deployer, network, accounts) {
   await deployer.deploy(BondingCurveVault, DonationLogic.address)
   let bondingVaultInstance = await BondingCurveVault.deployed()
 
+  // Deploy FractionalExponents contract
+  await deployer.deploy(FractionalExponents)
+
+  // Set compulsary values in logic contract
   await logicInstance.setTokenAndBondingVault(Token.address, BondingCurveVault.address)
+  await logicInstance.setExponentContract(FractionalExponents.address)
 
   console.log('  === Double check values are correct...')
   let tokenAddress = await logicInstance.tokenContract();
   let bondingVault = await logicInstance.bondingVault();
+  let exponentAddress = await logicInstance.exponentContract();
 
   console.log('tokenAddress set: ' + tokenAddress)
   console.log('bondingVault set: ' + bondingVault)
+  console.log('exponentAddress set: ' + exponentAddress)
 
-  // console.log('  === Fund bonding contract...')
+  console.log('  === Fund bonding contract...')
 
-  // await web3.eth.sendTransaction({to: bondingVault, from: accounts[1], value: web3.utils.toWei('5', 'ether')})
+  await web3.eth.sendTransaction({to: bondingVault, from: accounts[1], value: web3.utils.toWei('5', 'ether')})
 
-
-  // console.log('  === Double check values are correct...')
-  // let tokenAddress = await logicInstance.tokenContract();
-  // let bondingVault = await logicInstance.bondingVault();
-
-  // console.log('tokenAddress set: ' + tokenAddress)
-  // console.log('bondingVault set: ' + bondingVault)
-
-  // let bondingBalance = await web3.eth.getBalance(bondingVault)
-  // console.log('bondingCurve balance: ' + bondingBalance)
+  let bondingBalance = await web3.eth.getBalance(bondingVault)
+  console.log('bondingCurve balance: ' + bondingBalance)
 };

@@ -5,6 +5,7 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
 import "./VaultInterface.sol";
 import "./TokenInterface.sol";
+import "./FractionalExponents.sol";
 
 contract Logic is Ownable {
     using SafeMath for uint256;
@@ -15,8 +16,18 @@ contract Logic is Ownable {
     // Bonding curve ETH
     address public bondingVault;
 
+    // Contract that handles fractional exponents
+    address public exponentContract;
+
     // Minimum ETH balance for valid bonding curve
     uint256 public minEth;
+
+    event LogTokenSell
+    (
+        address byWhom,
+        uint256 price,
+        uint256 amountOfEth
+    );
 
     event LogTokenContractChanged
     (
@@ -26,6 +37,13 @@ contract Logic is Ownable {
     );
 
     event LogBondingVaultChanged
+    (
+        address byWhom,
+        address oldContract,
+        address newContract
+    );
+
+    event LogExponentContractChanged
     (
         address byWhom,
         address oldContract,
@@ -84,36 +102,59 @@ contract Logic is Ownable {
         require(_amount > 0 && tokenBalanceOfSender >= _amount, "Amount needs to be > 0 and tokenBalance >= amount to sell");
 
         // calculate sell return
-        uint256 amountOfEth = calculateReturn(_amount, tokenBalanceOfSender);
+        (uint256 price, uint256 amountOfEth) = calculateReturn(_amount, tokenBalanceOfSender);
 
         // burn tokens
         TokenInterface(tokenContract).burn(msg.sender, _amount);
 
         // sendEth to msg.sender from bonding curve
         VaultInterface(bondingVault).sendEth(amountOfEth, msg.sender);
+
+        emit LogTokenSell(msg.sender, price, amountOfEth);
     }
 
     /**
-    * @dev calculate how much ETH should be returned for a certain amount of tokens
+     * @dev calculate how much ETH should be returned for a certain amount of tokens
+     * @notice using version 2.1 of Khana formula - see documentation for more details
+     * @notice the first returned value (finalPrice) includes the 10^18 multiplier.
     */
-    function calculateReturn(uint256 _sellAmount, uint256 _tokenBalance) public view returns (uint256) {
+    function calculateReturn(
+        uint256 _sellAmount, 
+        uint256 _tokenBalance
+    ) 
+        public 
+        view 
+        returns (
+            uint256 finalPrice, 
+            uint256 redeemableEth
+        ) 
+    {
+        require(exponentContract != address(0), "exponentContract must be set to valid address");
         require(_tokenBalance >= _sellAmount, "User trying to sell more than they have");
-        uint256 supply = TokenInterface(tokenContract).getSupply();
+        uint256 tokenSupply = TokenInterface(tokenContract).getSupply();
+        uint256 ethInVault = bondingVault.balance;
 
         // For EVM accuracy
         uint256 multiplier = 10**18;
 
         if (coolDownPeriod(msg.sender) <= 0) {
-            // Price = (Portion of Supply ^ ((1/4) - Portion of Supply)) * (ETH in Pot / Token supply)
-            // NOT YET WORKING (problem with decimal precision for exponent)
-            uint256 portionOfSupply = (_tokenBalance.mul(multiplier).div(supply));
-            uint256 exponent = ((multiplier.div(multiplier).div(4*multiplier)).sub(portionOfSupply)).div(multiplier);
-            uint256 price = ((portionOfSupply**exponent).mul((bondingVault.balance).div(supply))).div(multiplier);
+            // a = (Sp.10^8)
+            uint256 portionE8 = (_tokenBalance.mul(10**8).div(tokenSupply));
+
+            // b = a^1/10
+            (uint256 exponentResult, uint8 precision) = FractionalExponents(exponentContract).power(portionE8, 1, 1, 10);
+
+            // b/8 * (funds backing curve / token supply)
+            uint256 interimPrice = (exponentResult.div(8)).mul(ethInVault.mul(multiplier).div(tokenSupply)).div(multiplier);
+
+            // get final price (with multiplier)
+            finalPrice = (interimPrice.mul(multiplier)).div(2**uint256(precision));
             
-            uint256 redeemableEth = price.mul(_sellAmount);
-            return redeemableEth;
+            // redeemable ETH (without multiplier)
+            redeemableEth = finalPrice.mul(_sellAmount).div(multiplier);
+            return (finalPrice, redeemableEth);
         } else {
-            return 0;
+            return (0,0);
         }
     }
 
@@ -149,6 +190,15 @@ contract Logic is Ownable {
         address oldContract = bondingVault;
         bondingVault = _bondingVault;
         emit LogBondingVaultChanged(msg.sender, oldContract, _bondingVault);
+    }
+
+    /**
+    * @dev Set the 'exponentContract' which calculates fractional exponents
+    */
+    function setExponentContract(address _exponentContract) public onlyOwner {
+        address oldContract = exponentContract;
+        exponentContract = _exponentContract;
+        emit LogExponentContractChanged(msg.sender, oldContract, exponentContract);
     }
 
     /**

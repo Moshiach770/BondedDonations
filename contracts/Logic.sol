@@ -158,6 +158,15 @@ contract Logic is Ownable {
         }
     }
 
+    /**
+    * @dev Owner can withdraw the remaining ETH balance as long as no minted tokens left
+    */
+    function sweepVault() public onlyOwner {
+        require(TokenInterface(tokenContract).getSupply() == 0, 'Sweep available only if no minted tokens left');
+        require(bondingVault.balance > 0, 'Vault is empty');
+        VaultInterface(bondingVault).sendEth(bondingVault.balance, msg.sender);
+    }
+
     // !! TODO: - set cooldown time period before selling
     // returns uint256 in number of hours
     function coolDownPeriod(address _tokenHolder) public view returns (uint256) {

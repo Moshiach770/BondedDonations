@@ -6,7 +6,7 @@ import LogicContract from "./contracts/DonationLogic.json";
 import TokenContract from "./contracts/Token.json";
 import BondingContract from "./contracts/BondingCurveVault.json"
 
-import { Pane, Text, Heading, TextInputField, Button } from 'evergreen-ui'
+import { Pane, Text, Heading, TextInputField, Button, Paragraph, Small } from 'evergreen-ui'
 
 
 import "./App.css";
@@ -151,6 +151,21 @@ class App extends Component {
     this.setState({ myEthBalance, tokenInfo: { tokenBalance, tokenSupply, tokenSymbol}, bondingBalance, charityBalance})
   }
 
+  sweep = async (event) => {
+      let { web3, accounts, logicContract } = this.state
+
+      let alert = window.confirm("You will sweep the vault contract and the remaining " + web3.utils.fromWei(this.state.bondingBalance, 'ether') +
+          ' ETH will be transferred to your account. Are you sure?')
+
+      if (alert === true) {
+          await logicContract.sweepVault({ from: accounts[0], gas: 100000, gasPrice: this.state.web3.utils.toWei('5', 'gwei') })
+      } else {
+          console.log('sweep cancelled')
+      }
+
+      this.updateBalances()
+  };
+
   render() {
 
     if (!this.state.web3 || !this.state.tokenContract || !this.state.bondingContract || !this.state.logicContract) {
@@ -168,7 +183,7 @@ class App extends Component {
 
     let tokenSymbol = this.state.tokenInfo.tokenSymbol
 
-    let sellLabel = "Amount of " + tokenSymbol + " to sell"
+    let sellLabel = "Amount of " + tokenSymbol + " to sell. Max " + tokenBalance
 
     return (
       <Pane padding={16}>
@@ -236,7 +251,7 @@ class App extends Component {
 
         {this.state.isOwner &&
           <Pane padding={16} background="tint1" borderRadius={5} marginBottom={16}>
-            <Heading>Admin</Heading>
+            <Heading>Admin dashboard</Heading>
             <Pane marginTop={16} marginBottom={16}>
               <form onSubmit={this.setCharityAddress} id="setCharityAddress">
                 <TextInputField
@@ -248,6 +263,24 @@ class App extends Component {
                 />
                 <Button type="submit" id="setButton" marginTop={-16}>Change</Button>
               </form>
+            </Pane>
+            <Text>Sweep remaining <b>{bondingBalance} ETH</b></Text>
+            {Number(tokenSupply) > 0 &&
+              <Paragraph>
+                  <Small>Note: You only can sweep if no more minted tokens left</Small>
+              </Paragraph>
+            }
+            <Pane marginTop={16} marginBottom={16}>
+                <Button
+                    disabled={Number(tokenSupply)>0}
+                    onClick={this.sweep}
+                    height={32}
+                    appearance="primary"
+                    marginRight={16}
+                    intent="warning"
+                >
+                    Sweep
+                </Button>
             </Pane>
           </Pane>
         }

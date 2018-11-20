@@ -8,8 +8,13 @@ module.exports = async function (deployer, network, accounts) {
   console.log('  === Deploying BondedDonation contracts...')
 
   // Deploy DonationLogic contract
-  let redCross = '0x726788048e8b1f3d00ea91f5543c7beb50bb1c14';
-  await deployer.deploy(DonationLogic, redCross)
+  let charityAddress;
+  if (network == 'develop' || network == 'development' || network == 'test') {
+      charityAddress = '0x726788048e8b1f3d00ea91f5543c7beb50bb1c14';
+  } else {
+    //TODO
+  }
+  await deployer.deploy(DonationLogic, charityAddress)
   let logicInstance = await DonationLogic.deployed()
 
   // Deploy TokenContract

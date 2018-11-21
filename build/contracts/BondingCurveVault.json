@@ -2710,12 +2710,90 @@
   },
   "networks": {
     "5777": {
-      "events": {},
+      "events": {
+        "0x96002de4f06f59b8d5ccae43c64b445572e1d530c9bc98d201018f5ac4843dbb": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": false,
+              "name": "byWhom",
+              "type": "address"
+            },
+            {
+              "indexed": true,
+              "name": "oldContract",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "name": "newContract",
+              "type": "address"
+            }
+          ],
+          "name": "LogLogicContractChanged",
+          "type": "event",
+          "signature": "0x96002de4f06f59b8d5ccae43c64b445572e1d530c9bc98d201018f5ac4843dbb"
+        },
+        "0xdf5983565e1f67d7cfa297d3729a3e95ec39dc41c53cfaf9f92bf23e9ad589bd": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": false,
+              "name": "amount",
+              "type": "uint256"
+            },
+            {
+              "indexed": true,
+              "name": "account",
+              "type": "address"
+            }
+          ],
+          "name": "LogEthSent",
+          "type": "event",
+          "signature": "0xdf5983565e1f67d7cfa297d3729a3e95ec39dc41c53cfaf9f92bf23e9ad589bd"
+        },
+        "0x8a68b2fe3158c268b3e8da102cd572ce692127bcc589402f0e06e2bfc0c3a9cf": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": false,
+              "name": "amount",
+              "type": "uint256"
+            },
+            {
+              "indexed": true,
+              "name": "account",
+              "type": "address"
+            }
+          ],
+          "name": "LogEthReceived",
+          "type": "event",
+          "signature": "0x8a68b2fe3158c268b3e8da102cd572ce692127bcc589402f0e06e2bfc0c3a9cf"
+        },
+        "0x8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "name": "previousOwner",
+              "type": "address"
+            },
+            {
+              "indexed": true,
+              "name": "newOwner",
+              "type": "address"
+            }
+          ],
+          "name": "OwnershipTransferred",
+          "type": "event",
+          "signature": "0x8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0"
+        }
+      },
       "links": {},
-      "address": "0xC04b3eE594742C10e0e456e81aDE3D599a7Baae0",
-      "transactionHash": "0x99994a470f5056fd3ff7e0e8a918c50fbfa980daf2e0b62fe18ea6a18afe63e1"
+      "address": "0x6aB5A776B2E8BB4c5E5C33a67b73A490aCBaB509",
+      "transactionHash": "0x35a64f92f7c568588efb0e4e545af8662db7ee6c2327e2fd778f47ed0c080c94"
     }
   },
   "schemaVersion": "3.0.0-beta.1",
-  "updatedAt": "2018-11-05T15:51:28.950Z"
+  "updatedAt": "2018-11-20T21:38:27.767Z"
 }

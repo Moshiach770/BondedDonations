@@ -264,24 +264,23 @@ class App extends Component {
                 <Button type="submit" id="setButton" marginTop={-16}>Change</Button>
               </form>
             </Pane>
-            <Text>Sweep remaining <b>{bondingBalance} ETH</b></Text>
-            {Number(tokenSupply) > 0 &&
-              <Paragraph>
-                  <Small>Note: You only can sweep if no more minted tokens left</Small>
-              </Paragraph>
-            }
-            <Pane marginTop={16} marginBottom={16}>
-                <Button
-                    disabled={Number(tokenSupply)>0}
-                    onClick={this.sweep}
-                    height={32}
-                    appearance="primary"
-                    marginRight={16}
-                    intent="warning"
-                >
-                    Sweep
-                </Button>
-            </Pane>
+            {Number(tokenSupply) == 0 &&
+              <Pane marginTop={16} marginBottom={16}>
+                  <div>
+                    <Text>Sweep remaining <b>{bondingBalance} ETH</b></Text>
+                  </div>
+                  <Button
+                      disabled={Number(tokenSupply)>0}
+                      onClick={this.sweep}
+                      height={32}
+                      appearance="primary"
+                      marginRight={16}
+                      intent="warning"
+                  >
+                      Sweep
+                  </Button>
+              </Pane>
+              }
           </Pane>
         }
         
